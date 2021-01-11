@@ -1,0 +1,36 @@
+---
+# tasks file for http_proxy
+- name:  delete previous httpd installed
+  yum:
+    name: httpd
+    state: absent
+
+#- name: test if openssl already installed
+#  openssl:
+#    name: openssl_csr
+#    state: latest
+
+#- name: install the latest version of httpd
+#  yum:
+#    name: httpd
+#    state: latest
+
+
+- name: 
+  file: 
+    path: /tmp/moro_dir
+    state: directory
+    mode: 0755
+
+- name: install the latest version of httpd
+  yum:
+    name: 
+       - httpd
+       - openssl
+       - ca-certificates
+    
+    state: latest
+    download_only: true
+    download_dir: /tmp/moro_dir 
+
+ 

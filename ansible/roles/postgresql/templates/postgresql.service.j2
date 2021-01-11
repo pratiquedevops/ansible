@@ -1,0 +1,14 @@
+[Unit]
+Description=postgresql
+After=network.target
+
+[Service]
+Type=forking
+User=postgres
+PIDFile={{ postgresql_data_path }}/postmaster.pid
+ExecStart={{ postgresql_bin }}/pg_ctl -D {{ postgresql_data_path }} start
+ExecStop={{ postgresql_bin }}/pg_ctl -D {{ postgresql_data_path }} stop
+
+[Install]
+WantedBy=multi-user.target
+

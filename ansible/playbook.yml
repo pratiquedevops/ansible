@@ -1,0 +1,4 @@
+- name: test du role java8
+  hosts: localhost
+  roles:
+    - java8

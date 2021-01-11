@@ -1,0 +1,24 @@
+---
+# tasks file for depot-local
+- name: yum install createrepo
+  yum: 
+    name: createrepo
+    state: present
+
+# creation d'un repolocal
+- name: 
+  command: createrepo /data/repo/spad-build/postgresql
+
+# createrepo /home/repo/puppet
+
+- name: cretation du depot local
+  file: path="{{ item }}" state=directory
+  with_items:
+    - /data/repo/spad-build/postgresql
+
+- name: copy localrepo.repo dans /etc/yum.repo.d
+  copy:
+    src: /root/playbooks-T/files/localrepo.repo
+    dest: /etc/yum.repo.d
+- name: 
+  comand: yum makecache

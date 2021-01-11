@@ -1,0 +1,138 @@
+---
+
+- name: Stop keycloak service
+  systemd:
+    name: keycloak
+    state: stopped
+  become: yes
+
+- name: Remove user keycloak
+  user:
+    name: "{{ spad_keycloak_user }}"
+    state: absent
+    remove: yes
+  become: true
+
+
+- name: Create keycloak group
+  group:
+    name: "{{ spad_keycloak_group }}"
+    state: present
+  become: true
+
+
+- name: Create keycloak user
+  user: 
+    name: "{{ spad_keycloak_user }}"
+    state: present
+    home: "{{spad_keycloak_home }}"
+    group: "{{ spad_keycloak_group }}"
+  become: true
+
+- name: create keycloak home directory
+  file:
+    path: "{{ spad_keycloak_home }}"
+    owner: "{{ spad_keycloak_user }}"
+    group: "{{ spad_keycloak_group }}"
+    state: directory
+    mode: 0755
+    recurse: yes
+  become: true
+
+- name: creation du dossier /opt/spad-keycloak/.ansible/tmp
+  file:
+    path: "{{ spad_keycloak_home }}/.ansible/tmp"
+    owner: "{{ spad_keycloak_user }}"
+    group: "{{ spad_keycloak_group }}"
+    state: directory
+    mode: 0755
+    recurse: yes
+  become: true
+
+
+
+# tasks file for keycloak
+- name: Download  keycloak-11.0.3.tar.gz
+  get_url:
+    url:  https://downloads.jboss.org/keycloak/11.0.3/keycloak-11.0.3.tar.gz  
+    dest: /tmp
+    mode: 0755
+  become: true
+  become_user: "{{ spad_keycloak_user }}"
+
+- name: desarchiver le tar.gz
+  unarchive:
+    src: /tmp/keycloak-11.0.3.tar.gz
+    dest: "{{ spad_keycloak_home }}"
+    mode: 0755
+  become: true
+  become_user: "{{ spad_keycloak_user }}"
+ 
+- name: Create simlink for current version
+  file:
+    src:  "{{ spad_keycloak_home }}/keycloak-{{ spad_keycloak_version }}"
+    dest: "{{ spad_keycloak_home }}/current"
+    owner: "{{ spad_keycloak_user }}"
+    group: "{{ spad_keycloak_group }}"
+    mode: 0755
+    state: link
+
+
+#- name: copie de fichier de conf
+#  template:
+#    src:  standalone.xml.j2
+#    dest:  "{{ spad_keycloak_home }}/current/standalone/configuration/standalone.xml"
+#  become: true
+#  become_user: "{{ spad_keycloak_user }}"  
+
+#- name: installation de keycloak
+#  become: yes
+#  become_user: "{{ spad_keycloak_user }}"
+#  become_method: su
+#  shell:   "bash standalone.sh  & "
+#  args:
+#    chdir: "{{ spad_keycloak_home }}/current/bin/"
+
+- name: Copy keycloak service
+  template:
+    src: keycloak.service.j2
+    dest: /etc/systemd/system/keycloak.service
+    owner: root
+    group: root
+  become: yes
+  notify:
+    - Reload systemd
+
+
+
+- name: Enable and start keycloak service
+  systemd:
+    name: keycloak
+    enabled: yes
+    daemon_reload: yes
+    state: started
+  become: yes
+
+- name: Add keycloak admin user
+  shell:  "{{ spad_keycloak_home }}/current/bin/add-user-keycloak.sh -r master -u {{ spad_keycloak_admin_username }} -p {{ spad_keycloak_admin_password }}"
+  become: true
+  become_user: "{{ spad_keycloak_user }}"
+  ignore_errors: true
+
+- name: Add Wildfly admin user
+  shell:  "{{ spad_keycloak_home }}/current/bin/add-user.sh  -u {{ spad_wildfly_admin_username }} -p {{ spad_wildfly_admin_password }}"
+  become: true
+  become_user: "{{ spad_keycloak_user }}"
+  ignore_errors: true
+  notify: Restart keycloak
+  
+- name: permit traffic in default zone for keycloak  service
+  firewalld:
+    port: "{{ item }}"  
+    permanent: yes
+    immediate: yes
+    state: enabled
+  with_items:
+    - 8080/tcp 
+    - 9990/tcp
+

@@ -1,0 +1,84 @@
+---
+#- name: Get keycloak version
+#  shell: "{{ spad_keycloak_home }}/current/bin/standalone.sh -v | tail -n 1 | awk '{print $2}'"
+#  register: spad_keycloak_installed_version
+#  become: true
+#  become_user: "{{ spad_keycloak_user }}"
+
+- name: Create keycloak group
+  group:
+    name: "{{ spad_keycloak_group }}"
+    state: present
+  become: true
+
+- name: Create keycloak user
+  user: 
+    name: "{{ spad_keycloak_user }}"
+    state: present
+    home: "{{spad_keycloak_home }}"
+    group: "{{ spad_keycloak_group }}"
+  become: true
+
+- name: create keycloak home directory
+  file:
+    path: "{{ spad_keycloak_home }}"
+    owner: "{{ spad_keycloak_user }}"
+    group: "{{ spad_keycloak_group }}"
+    state: directory
+    mode: 0700
+  become: true
+
+# tasks file for keycloak
+- name: Download  keycloak-11.0.3.tar.gz
+  get_url:
+    url:  https://downloads.jboss.org/keycloak/11.0.3/keycloak-11.0.3.tar.gz  
+    dest: /tmp
+    mode: 0755
+  become: true
+  become_user: "{{ spad_keycloak_user }}"
+
+- name: desarchiver le tar.gz
+  unarchive:
+    src: /tmp/keycloak-11.0.3.tar.gz
+    dest: "{{ spad_keycloak_home }}"
+    mode: 0755
+  become: true
+  become_user: "{{ spad_keycloak_user }}"
+ 
+- name: Create simlink for current version
+  file:
+    src:  "{{ spad_keycloak_home }}/keycloak-{{ spad_keycloak_version }}"
+    dest: "{{ spad_keycloak_home }}/current"
+    owner: "{{ spad_keycloak_user }}"
+    group: "{{ spad_keycloak_group }}"
+    mode: 0755
+    state: link
+
+- name: Add keycloak admin user
+  shell:  "{{ spad_keycloak_home }}/current/bin/add-user-keycloak.sh -r master -u {{ spad_keycloak_admin_username }} -p {{ spad_keycloak_admin_password }}"
+  become: true
+  become_user: "{{ spad_keycloak_user }}"
+  ignore_errors: true
+
+- name: Add Wildfly admin user
+  shell:  "{{ spad_keycloak_home }}/current/bin/add-user.sh  -u {{ spad_wildfly_admin_username }} -p {{ spad_wildfly_admin_password }}"
+  become: true
+  become_user: "{{ spad_keycloak_user }}"
+  ignore_errors: true
+
+
+
+- name: copie de fichier de conf
+  template:
+    src:  standalone.xml.j2
+    dest:  "{{ spad_keycloak_home }}/current/standalone/configuration/standalone.xml"
+  become: true
+  become_user: "{{ spad_keycloak_user }}"  
+
+- name: installation de keycloak
+  become: yes
+  become_user: "{{ spad_keycloak_user }}"
+  become_method: su
+  shell:   "bash standalone.sh  & "
+  args:
+    chdir: "{{ spad_keycloak_home }}/current/bin/"

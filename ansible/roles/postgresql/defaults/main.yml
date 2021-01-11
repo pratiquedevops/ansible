@@ -1,0 +1,20 @@
+---
+# defaults file for postgresql
+rpms_directory: /usr/local/src/RPMS
+#version_rpms: 9.6.20-1PGDG.rhel7.x86_64.rpm
+version_rpms: 9.6.20
+postgresql_packages: 
+  - "postgresql96-server-{{ version_rpms }}"
+  - "postgresql96-contrib-{{ version_rpms }}"
+  - "postgresql96-libs-{{ version_rpms }}"
+  
+postgresql_data_path: "/var/postgres/data"
+postgresql_bin: "/usr/pgsql-9.6/bin"
+
+
+
+
+rpms_src_urls: 
+  - https://yum.postgresql.org/9.6/redhat/rhel-7-x86_64/postgresql96-server-9.6.20-1PGDG.rhel7.x86_64.rpm
+  - https://yum.postgresql.org/9.6/redhat/rhel-7-x86_64/postgresql96-contrib-9.6.20-1PGDG.rhel7.x86_64.rpm
+  - https://yum.postgresql.org/9.6/redhat/rhel-7-x86_64/postgresql96-libs-9.6.20-1PGDG.rhel7.x86_64.rpm

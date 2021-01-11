@@ -1,0 +1,32 @@
+---
+# tasks file for java8
+
+- name: creation de repertoire /root/playbooks-T/ansible/roles/java8/assets
+  file:
+    path:  /root/playbooks-T/ansible/roles/java8/assets/rpms
+    state: directory
+    
+- name: desinstallation de java8
+  yum:
+    name: 
+      - java-1.8.0-openjdk
+      - java-1.8.0-openjdk-headless
+    state: absent
+
+- name: Telechargement des rpms java8
+  yum:
+    name: 
+      - java-1.8.0-openjdk 
+      - java-1.8.0-openjdk-headless
+    state: latest
+    download_dir: /root/playbooks-T/ansible/roles/java8/assets/rpms
+    download_only: true
+  
+
+- name: installation de java8
+  yum: 
+    name: 
+      - "{{ item }}"
+    state: present
+  with_fileglob:
+    - "/root/playbooks-T/ansible/roles/java8/assets/rpms/*"

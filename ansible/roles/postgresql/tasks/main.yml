@@ -1,0 +1,67 @@
+---
+# tasks file for postgresql
+# Download postgresql rpm packages
+- name: Creation de repertoire de telechargement
+  file:
+    path: "{{ rpms_directory }}"
+    state: directory
+    mode: '0755' 
+
+- name: Download the postgresql package but do not install it
+  yum:
+    name: "{{ postgresql_packages }}"
+    state: latest
+    download_dir: "{{ rpms_directory }}"
+    download_only: true
+
+
+- name: Installation de Postgresql
+  become: true
+  yum:
+    name: 
+      - "{{ rpms_directory }}/postgresql96-server-9.6.20-1PGDG.rhel7.x86_64.rpm"
+      - "{{ rpms_directory }}/postgresql96-contrib-9.6.20-1PGDG.rhel7.x86_64.rpm"
+      - "{{ rpms_directory }}/postgresql96-libs-9.6.20-1PGDG.rhel7.x86_64.rpm"
+    state: present
+
+- name: Creation du repertoire de la base de données
+  file:
+    path: "{{ postgresql_data_path }}"
+    state: directory
+    owner: "postgres"
+    group: "postgres"
+
+- name: Creation de la base de donnees
+  become: true
+  become_user: postgres
+  shell: "{{ postgresql_bin }}/initdb -D {{ postgresql_data_path }}"
+  args:
+    creates: "{{ postgresql_data_path }}/postgresql.conf"
+
+
+- name: Inserting a line after a pattern in Ansible example
+  lineinfile:
+    path: "{{ postgresql_data_path }}/pg_hba.conf"
+    line: "host    all             all             192.168.1.38/32            trust" 
+    insertafter: "^# IPv4 local connections:"
+
+- name: Installe le service PostgreSQL
+  become: true
+  template:
+    src: "postgresql.service.j2"
+    dest: "/etc/systemd/system/postgresql.service"
+
+
+- name: Demarre le service PostgreSQL
+  become: true
+  service:
+    name: postgresql
+    enabled: true
+    state: started
+
+
+- name: Test de la connection Ã  la base de donnÃ©es
+  shell: "psql -h localhost -p 5432 -U postgres postgres -c \"select 1;\""
+  changed_when: false
+
+

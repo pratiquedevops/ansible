@@ -1,0 +1,26 @@
+---
+# tasks file for keycloak
+- name: téléchargement de keycloak.tar.gz
+  get_url:
+    url:  https://downloads.jboss.org/keycloak/11.0.3/keycloak-11.0.3.tar.gz  
+    dest: /tmp
+    mode: '0755'
+#- name: Création du repetoire /keycloak
+#  file:
+#    path: /tmp/keycloak
+#    state: directory
+#    mode:  0755
+#    recurse: yes
+ 
+- name: Create a directory if it does not exist
+  become: true
+  file:
+    path: /etc/some_directory
+    state: directory
+    mode: '0755'
+
+  
+#- name: desarchiver le tar.gz
+#  unarchive:
+#    src: /tmp/keycloak-11.0.3.tar.gz
+#    dest: /keycloak

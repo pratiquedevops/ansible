@@ -1,0 +1,15 @@
+[Unit]
+Description=Keycloak
+After=network.target
+
+[Service]
+Type=idle
+User={{ spad_keycloak_user }}
+Group={{ spad_keycloak_group }}
+ExecStart={{ spad_keycloak_home }}/current/bin/standalone.sh -Djboss.bind.address=0.0.0.0  -Dkeycloak.migration.action=export  -Dkeycloak.migration.provider=singleFile -Dkeycloak.migration.file=/tmp/example-realm.json  
+
+TimeoutStartSec=600
+TimeoutStopSec=600
+
+[Install]
+WantedBy=multi-user.target

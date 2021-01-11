@@ -1,0 +1,11 @@
+---
+# handlers file for keycloak
+- name: Restart keycloak
+  service:
+    name: keycloak
+    state: restarted
+  become: yes
+
+- name: Reload systemd
+  command: systemctl daemon-reload
+  become: yes

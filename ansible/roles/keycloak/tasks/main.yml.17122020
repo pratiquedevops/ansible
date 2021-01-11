@@ -1,0 +1,51 @@
+---
+- name: Create keycloak group
+  group:
+    name: "{{ keycloak_group }}"
+    state: present
+  become: true
+
+- name: Create keycloak user
+  user: 
+    name: "{{ keycloak_user }}"
+    state: present
+    home: "{{keycloak_home }}"
+    group: "{{ keycloak_group }}"
+  become: true
+
+- name: create keycloak home directory
+  file:
+    path: "{{ keycloak_home }}"
+    owner: "{{ keycloak_user }}"
+    group: "{{ keycloak_group }}"
+    state: directory
+    mode: 0700
+   become: true
+
+# tasks file for keycloak
+- name: téléchargement de keycloak.tar.gz
+  get_url:
+    url:  https://downloads.jboss.org/keycloak/11.0.3/keycloak-11.0.3.tar.gz  
+    dest: /tmp
+    mode: 0755
+- name: Création du repetoire /keycloak
+  file:
+    path: /keycloak
+    state: directory
+    mode:  0755
+    recurse: yes
+  
+- name: desarchiver le tar.gz
+  unarchive:
+    src: /tmp/keycloak-11.0.3.tar.gz
+    dest: /keycloak
+- name: copie de fichier de conf
+  template:
+    src:  standalone.xml.j2
+    dest: /keycloak/keycloak-11.0.3/standalone/configuration/standalone.xml 
+
+- name: installation de keycloak
+  become: true
+  shell: ./standalone.sh  &
+  args:
+    chdir: /keycloak/keycloak-11.0.3/bin/
