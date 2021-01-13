@@ -1,2 +1,55 @@
 ---
+- name: import rabbitmq key
+  rpm_key:
+    state: present
+    key: "{{ item }}" 
+    validate_certs: yes
+  with_items:
+    - https://packagecloud.io/rabbitmq/erlang/gpgkey
+    - https://dl.bintray.com/rabbitmq/Keys/rabbitmq-release-signing-key.asc
 # tasks file for rabbitmq
+- name: Install erlang et rabbitmq
+  become: true
+  yum:
+    name:
+      -  "{{ rabbitmq_packages_dir }}/socat-1.7.3.3-2.el8.x86_64.rpm"
+      -  "{{ rabbitmq_packages_dir }}/erlang-23.2.1-1.el8.x86_64.rpm"
+      -  "{{ rabbitmq_packages_dir }}/rabbitmq-server-3.8.9-1.el8.noarch.rpm"
+    state: present    
+
+- name: Enable and start rabbitmq
+  become: true
+  systemd:
+    name: rabbitmq-server
+    enabled: true
+    state: started
+
+- name: Enables the rabbitmq_management plugin
+  become: true
+  rabbitmq_plugin:
+    names: rabbitmq_management
+    state: enabled
+
+
+# Add user to server and assign full access control on / vhost.
+# The user doesn't have permission rules for other vhosts
+- name: rabbitmq_user
+  become: true
+  rabbitmq_user:
+    user: rabbitmqadmin
+    password: changeme
+    permissions:
+      - vhost: /
+        configure_priv: .*
+        read_priv: .*
+        write_priv: .*
+    state: present
+
+- name: add port  5672 and  15672 in firewalld
+  become: true
+  firewalld:
+    port: 
+      - 5672/tcp
+      - 15672/tcp
+    permanent: yes
+    state: enabled

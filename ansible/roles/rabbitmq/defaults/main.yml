@@ -1,2 +1,5 @@
 ---
 # defaults file for rabbitmq
+
+#rabbitmq_packages_dir: /root/playbooks-T/ansible/roles/rabbitmq/assets
+rabbitmq_packages_dir: /tmp
