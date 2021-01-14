@@ -30,6 +30,10 @@
     names: rabbitmq_management
     state: enabled
 
+# Ensure that the vhost /test exists.
+- rabbitmq_vhost:
+    name: /rabbitmq
+    state: present
 
 # Add user to server and assign full access control on / vhost.
 # The user doesn't have permission rules for other vhosts
@@ -38,18 +42,20 @@
   rabbitmq_user:
     user: rabbitmqadmin
     password: changeme
-    permissions:
-      - vhost: /
-        configure_priv: .*
-        read_priv: .*
-        write_priv: .*
+    update_password: always
+    vhost: /rabbitmq
+    configure_priv: .*
+    read_priv: .*
+    write_priv: .*
     state: present
+  no_log: true 
 
 - name: add port  5672 and  15672 in firewalld
   become: true
   firewalld:
-    port: 
-      - 5672/tcp
-      - 15672/tcp
+    port: "{{ item }}"
     permanent: yes
     state: enabled
+  with_items:
+    - 5672/tcp
+    - 15672/tcp
